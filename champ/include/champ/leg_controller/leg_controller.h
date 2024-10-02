@@ -97,7 +97,7 @@ namespace champ
                 req_vel.linear.y = capVelocities(req_vel.linear.y, -base_->gait_config.max_linear_velocity_y, base_->gait_config.max_linear_velocity_y);
                 req_vel.angular.z = capVelocities(req_vel.angular.z, -base_->gait_config.max_angular_velocity_z, base_->gait_config.max_angular_velocity_z);
                 
-                float tangential_velocity = req_vel.angular.z * base_->lf.center_to_nominal();
+                float tangential_velocity = req_vel.angular.z * base_->lf.center_to_nominal(); // this could be the tangential velocity of the foot lf
                 float velocity =  sqrtf(pow(req_vel.linear.x, 2) + pow(req_vel.linear.y + tangential_velocity, 2));
                 
                 //calculate optimal distance to hop based

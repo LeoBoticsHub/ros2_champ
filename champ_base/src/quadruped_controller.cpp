@@ -95,7 +95,7 @@ QuadrupedController::QuadrupedController():
 
     loop_timer_ = this->create_wall_timer(
          std::chrono::duration_cast<std::chrono::milliseconds>(period), std::bind(&QuadrupedController::controlLoop_, this));
-    req_pose_.position.z = gait_config_.nominal_height;
+    req_pose_.position.z = gait_config_.nominal_height; // this means thath the first and only (if you don't send other body_pose) req_pos_ is [0 0 gait_config_.nominal_height 0 0 0]^T ([x y z roll pitch yaw]^T)
 }
 
 void QuadrupedController::controlLoop_()
