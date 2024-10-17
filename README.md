@@ -31,6 +31,7 @@ Current state of ROS2 port:
 - &check; Working Gazebo with teleoperated robot.
 - &check; Working Gazebo demo with SLAM.
 - &check; Working Gazebo demo with nav2 integration.
+- &check; Working in gazebo fortrees
 - &cross; Code clean-up and refactoring.
 - &cross; Testing with real robot.
 - &cross; Setup-Assistant.
