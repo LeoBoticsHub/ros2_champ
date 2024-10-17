@@ -49,8 +49,7 @@ Current state of ROS2 port:
     rosdep update
 
     cd <your_ws>/src
-    git clone --recursive https://github.com/chvmp/champ -b ros2
-    git clone https://github.com/chvmp/champ_teleop -b ros2
+    git clone --recursive https://github.com/LeoBoticsHub/champ.git -b ros2_dev
     cd ..
     rosdep install --from-paths src --ignore-src -r -y
 
