@@ -62,6 +62,16 @@ If you want to use any of the pre-configured robots like Anymal, Mini Cheetah, o
     colcon build
     . <your_ws>/install/setup.bash
 
+### 1.3 Working with Unitree B1
+
+    cd <your_ws>/src
+    git clone https://github.com/LeoBoticsHub/champ_simulation.git
+    git clone https://github.com/LeoBoticsHub/sensors_description.git -b 1-ros2_gazebo_simulation    
+    git clone https://github.com/LeoBoticsHub/b1_description.git -b ros2_control_plugin
+    cd <your_ws>
+    colcon build
+    . <your_ws>/install/setup.bash
+    
 ## 2. Quick Start
 
 You don't need a physical robot to run the following demos. If you're building a physical robot, you can find out more how to configure and run a new robot in step 3.
