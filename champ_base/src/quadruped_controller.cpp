@@ -74,6 +74,8 @@ QuadrupedController::QuadrupedController():
     if(publish_joint_control_)
     {
         joint_commands_publisher_ = this->create_publisher<trajectory_msgs::msg::JointTrajectory>(joint_control_topic, 10);
+        joint_states_subscriber_ = this->create_subscription<sensor_msgs::msg::JointState>(
+            "/joint_states", 10, std::bind(&QuadrupedController::jointStateCallback_, this, std::placeholders::_1));
     }
 
     if(publish_joint_states_ && !in_gazebo_)
@@ -109,8 +111,70 @@ void QuadrupedController::controlLoop_()
     leg_controller_.velocityCommand(target_foot_positions, req_vel_, rosTimeToChampTime(clock_.now()));
     kinematics_.inverse(target_joint_positions, target_foot_positions);
 
-    publishFootContacts_(foot_contacts);
-    publishJoints_(target_joint_positions);
+    if(stand_up_ == true)
+    {
+        actual_time_ = rosTimeToChampTime(clock_.now());
+        if(actual_joint_states_.position.size() == 12 && actual_time_ != 0)
+        {
+            if(starting_values_ == true) 
+            {   
+                starting_time_ = rosTimeToChampTime(clock_.now());
+                for(int i=0; i<4; i++)
+                {
+                    starting_joint_value[i*3+0] = this->actual_joint_states_.position[i*3+0];
+                    starting_joint_value[i*3+1] = this->actual_joint_states_.position[i*3+1];             
+                    starting_joint_value[i*3+2] = this->actual_joint_states_.position[i*3+2];
+                }
+                starting_values_ = false;
+                // std::cout << "----------------------------------------------------------------------------" << std::endl;
+                // RCLCPP_INFO(this->get_logger(), "Time: %lu", rosTimeToChampTime(clock_.now()));
+                // std::cout << "STARTING TIME: " << starting_time_ << std::endl;
+                // std::cout << "----------------------------------------------------------------------------" << std::endl;
+
+            }
+        //     RCLCPP_INFO(this->get_logger(), "Actual joint state:");
+        //     for (size_t i = 0; i < 12; ++i) {
+        //             RCLCPP_INFO(this->get_logger(), "Joint %zu: %f", i, actual_joint_states_.position[i]);
+        //     }
+        //     RCLCPP_INFO(this->get_logger(), "----------------------------------------");
+        //     starting_values_ = false;                        
+        // }
+            for(int i = 0; i<4; i++)
+            {
+                target_joint_positions[i*3+0] = starting_joint_value[i*3+0] + ((target_joint_positions[i*3+0] - starting_joint_value[i*3+0])/finishing_time_)*(actual_time_-starting_time_);
+                target_joint_positions[i*3+1] = starting_joint_value[i*3+1] + ((target_joint_positions[i*3+1] - starting_joint_value[i*3+1])/finishing_time_)*(actual_time_-starting_time_);
+                target_joint_positions[i*3+2] = starting_joint_value[i*3+2] + ((target_joint_positions[i*3+2] - starting_joint_value[i*3+2])/finishing_time_)*(actual_time_-starting_time_);
+                // std::cout << target_joint_positions[1] << std::endl;
+            }
+            publishFootContacts_(foot_contacts);
+            publishJoints_(target_joint_positions);  
+        }      
+    }
+    // std::cout << "ACTUAL TIME: " << actual_time_ << std::endl;
+    // std::cout << "STARTING TIME: " << starting_time_ << std::endl;
+    // std::cout << "DELTA TIME: " << actual_time_ - starting_time_ << std::endl;
+    // std::cout << "SIZE: " << actual_joint_states_.position.size() << std::endl;
+
+    // // Log the results
+    // RCLCPP_INFO(this->get_logger(), "Inverse Kinematics Results:");
+    // // for (size_t i = 0; i < 12; ++i) {
+    // //     RCLCPP_INFO(this->get_logger(), "Joint %zu: %.4f", i, target_joint_positions[i]);
+    // // }
+    // RCLCPP_INFO(this->get_logger(), "Time: %lu", rosTimeToChampTime(clock_.now()));
+    // RCLCPP_INFO(this->get_logger(), "----------------------------------------");
+
+    if(stand_up_ == false)
+    {    
+        publishFootContacts_(foot_contacts);
+        publishJoints_(target_joint_positions);
+    }
+
+    actual_time_ = rosTimeToChampTime(clock_.now());
+    if((actual_time_-starting_time_) >= finishing_time_ && actual_joint_states_.position.size() == 12)
+    {
+        stand_up_ = false;
+    }
+
 }
 
 void QuadrupedController::cmdVelCallback_(const geometry_msgs::msg::Twist::SharedPtr msg)
@@ -140,6 +204,40 @@ void QuadrupedController::cmdPoseCallback_(const geometry_msgs::msg::Pose::Share
     req_pose_.position.x = msg->position.x;
     req_pose_.position.y = msg->position.y;
     req_pose_.position.z = msg->position.z +  gait_config_.nominal_height;
+}
+
+
+void QuadrupedController::jointStateCallback_(const sensor_msgs::msg::JointState::SharedPtr msg)
+{
+        actual_joint_states_.header.stamp = clock_.now();
+
+        actual_joint_states_.name.resize(joint_names_.size());
+        actual_joint_states_.position.resize(joint_names_.size());
+        actual_joint_states_.name = joint_names_;
+
+        for (size_t i = 0; i < joint_names_.size(); ++i)
+        {   
+            for(size_t k = 0; k < joint_names_.size(); ++k)
+            {
+            if(joint_names_[i] == msg->name[k])
+            {
+                actual_joint_states_.position[i]= msg->position[k];
+                // std::cout << "------------------------------------------------------------------------------------------------" << std::endl;
+                // std::cout << "ACTUAL JOINT STATE NAME: " << actual_joint_states_.name[i] << std::endl;
+                // std::cout << "MSG JOINT STATE NAME: " << msg->name[k] << std::endl;
+                // std::cout << "ACTUAL JOINT STATE POSITION: " << actual_joint_states_.position[i] << std::endl;
+                // std::cout << "ACTUAL JOINT STATE POSITION: " << msg->position[k] << std::endl;
+                // std::cout << "------------------------------------------------------------------------------------------------" << std::endl;
+            } 
+            }
+        }
+
+        // RCLCPP_INFO(this->get_logger(), "Actual joint state:");
+        // for (size_t i = 0; i < 12; ++i) {
+        //     RCLCPP_INFO(this->get_logger(), "Joint %zu: %f", i, actual_joint_states_.position[i]);
+        // }
+        // RCLCPP_INFO(this->get_logger(), "----------------------------------------");
+
 }
 
 void QuadrupedController::publishJoints_(float target_joints[12])

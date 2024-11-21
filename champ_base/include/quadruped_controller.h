@@ -54,8 +54,8 @@ class QuadrupedController: public rclcpp::Node
 {
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_subscription_;
     rclcpp::Subscription<geometry_msgs::msg::Pose>::SharedPtr cmd_pose_subscription_;
+    rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_states_subscriber_;
     
-
     rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr joint_commands_publisher_;
     rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_states_publisher_;
     rclcpp::Publisher<champ_msgs::msg::ContactsStamped>::SharedPtr foot_contacts_publisher_;
@@ -74,11 +74,19 @@ class QuadrupedController: public rclcpp::Node
     champ::Kinematics kinematics_;
 
     std::vector<std::string> joint_names_;
+    sensor_msgs::msg::JointState actual_joint_states_;
 
     bool publish_foot_contacts_;
     bool publish_joint_states_;
     bool publish_joint_control_;
     bool in_gazebo_;
+    bool stand_up_ = true;
+    bool starting_values_ = true;
+
+    float starting_joint_value[12] = {};   
+    long int actual_time_;
+    long int starting_time_;
+    long int finishing_time_ = 2500000; // in microseconds (10^-6)
 
     void controlLoop_();
     
@@ -87,7 +95,7 @@ class QuadrupedController: public rclcpp::Node
 
     void cmdVelCallback_(const geometry_msgs::msg::Twist::SharedPtr msg);
     void cmdPoseCallback_(const geometry_msgs::msg::Pose::SharedPtr msg);
-
+    void jointStateCallback_(const sensor_msgs::msg::JointState::SharedPtr msg);
     public:
         QuadrupedController();
 };

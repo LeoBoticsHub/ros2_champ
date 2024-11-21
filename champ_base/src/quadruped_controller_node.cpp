@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 int main(int argc, char** argv )
 {
   rclcpp::init(argc, argv);
+  rclcpp::sleep_for(std::chrono::seconds(5));
   rclcpp::spin(std::make_shared<QuadrupedController>());
   rclcpp::shutdown();
   return 0;
