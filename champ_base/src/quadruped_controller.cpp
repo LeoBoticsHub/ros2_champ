@@ -75,7 +75,9 @@ QuadrupedController::QuadrupedController():
     {
         joint_commands_publisher_ = this->create_publisher<trajectory_msgs::msg::JointTrajectory>(joint_control_topic, 10);
         joint_states_subscriber_ = this->create_subscription<sensor_msgs::msg::JointState>(
-            "/joint_states", 10, std::bind(&QuadrupedController::jointStateCallback_, this, std::placeholders::_1));
+            "/test_joint_states", 10, std::bind(&QuadrupedController::jointStateCallback_, this, std::placeholders::_1));
+        // joint_states_subscriber_ = this->create_subscription<sensor_msgs::msg::JointState>(
+        //     "/joint_states", 10, std::bind(&QuadrupedController::jointStateCallback_, this, std::placeholders::_1));
     }
 
     if(publish_joint_states_ && !in_gazebo_)
