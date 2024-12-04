@@ -75,6 +75,7 @@ class QuadrupedController: public rclcpp::Node
 
     std::vector<std::string> joint_names_;
     sensor_msgs::msg::JointState actual_joint_states_;
+    trajectory_msgs::msg::JointTrajectoryPoint point_prec_;
 
     bool publish_foot_contacts_;
     bool publish_joint_states_;

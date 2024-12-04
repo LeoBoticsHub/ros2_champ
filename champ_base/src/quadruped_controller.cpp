@@ -74,10 +74,10 @@ QuadrupedController::QuadrupedController():
     if(publish_joint_control_)
     {
         joint_commands_publisher_ = this->create_publisher<trajectory_msgs::msg::JointTrajectory>(joint_control_topic, 10);
-        // joint_states_subscriber_ = this->create_subscription<sensor_msgs::msg::JointState>(
-        //     "/test_joint_states", 10, std::bind(&QuadrupedController::jointStateCallback_, this, std::placeholders::_1));
         joint_states_subscriber_ = this->create_subscription<sensor_msgs::msg::JointState>(
-            "/joint_states", 10, std::bind(&QuadrupedController::jointStateCallback_, this, std::placeholders::_1));
+            "/test_joint_states", 10, std::bind(&QuadrupedController::jointStateCallback_, this, std::placeholders::_1));
+        // joint_states_subscriber_ = this->create_subscription<sensor_msgs::msg::JointState>(
+        //     "/joint_states", 10, std::bind(&QuadrupedController::jointStateCallback_, this, std::placeholders::_1));
     }
 
     if(publish_joint_states_ && !in_gazebo_)
@@ -96,7 +96,8 @@ QuadrupedController::QuadrupedController():
     champ::URDF::loadFromString(base_, this->get_node_parameters_interface(), urdf);
     joint_names_ = champ::URDF::getJointNames(this->get_node_parameters_interface());
     std::chrono::milliseconds period(static_cast<int>(1000/loop_rate));
-
+    point_prec_.positions.resize(12);
+    point_prec_.velocities.resize(12);
     loop_timer_ = this->create_wall_timer(
          std::chrono::duration_cast<std::chrono::milliseconds>(period), std::bind(&QuadrupedController::controlLoop_, this));
     req_pose_.position.z = gait_config_.nominal_height; // this means thath the first and only (if you don't send other body_pose) req_pos_ is [0 0 gait_config_.nominal_height 0 0 0]^T ([x y z roll pitch yaw]^T)
@@ -248,20 +249,30 @@ void QuadrupedController::publishJoints_(float target_joints[12])
     {
         trajectory_msgs::msg::JointTrajectory joints_cmd_msg;
         joints_cmd_msg.header.stamp = clock_.now();
-        joints_cmd_msg.header.stamp.sec = 0;
-        joints_cmd_msg.header.stamp.nanosec = 0;
+        // Uncomment for the original version
+        // joints_cmd_msg.header.stamp.sec = 0;
+        // joints_cmd_msg.header.stamp.nanosec = 0;
         
         joints_cmd_msg.joint_names = joint_names_;
 
         trajectory_msgs::msg::JointTrajectoryPoint point;
-        point.positions.resize(12);
 
-        point.time_from_start = rclcpp::Duration::from_seconds(1.0 / 60.0);
+        point.positions.resize(12);
+        // Comment for the original version
+        point.velocities.resize(12);
+
+        // Uncomment for the original version
+        // point.time_from_start = rclcpp::Duration::from_seconds(1.0 / 60.0);
         for(size_t i = 0; i < 12; i++)
         {
             point.positions[i] = target_joints[i];
+            // Comment for the original version
+            point.velocities[i] = (point.positions[i] - point_prec_.positions[i])/0.005;
+            // Comment for the original version
+            point.velocities[i] = 0.2 * point.velocities[i] + 0.8 * point_prec_.velocities[i]; 
         }
 
+        point_prec_ = point;
         joints_cmd_msg.points.push_back(point);
         joint_commands_publisher_->publish(joints_cmd_msg);
     }
