@@ -74,10 +74,10 @@ QuadrupedController::QuadrupedController():
     if(publish_joint_control_)
     {
         joint_commands_publisher_ = this->create_publisher<trajectory_msgs::msg::JointTrajectory>(joint_control_topic, 10);
-        joint_states_subscriber_ = this->create_subscription<sensor_msgs::msg::JointState>(
-            "/test_joint_states", 10, std::bind(&QuadrupedController::jointStateCallback_, this, std::placeholders::_1));
         // joint_states_subscriber_ = this->create_subscription<sensor_msgs::msg::JointState>(
-        //     "/joint_states", 10, std::bind(&QuadrupedController::jointStateCallback_, this, std::placeholders::_1));
+        //     "/test_joint_states", 10, std::bind(&QuadrupedController::jointStateCallback_, this, std::placeholders::_1));
+        joint_states_subscriber_ = this->create_subscription<sensor_msgs::msg::JointState>(
+            "/joint_states", 10, std::bind(&QuadrupedController::jointStateCallback_, this, std::placeholders::_1));
     }
 
     if(publish_joint_states_ && !in_gazebo_)
@@ -173,26 +173,26 @@ void QuadrupedController::controlLoop_()
     // RCLCPP_INFO(this->get_logger(), "Time: %lu", rosTimeToChampTime(clock_.now()));
     // RCLCPP_INFO(this->get_logger(), "----------------------------------------");
 
-    if(stand_up_ == false)
-    {
-        // Uncomment for squat simulation
-        // sin_time_ = rosTimeToChampTime(clock_.now()) - finishing_time_;
-
-        // for(int i = 0; i<4; i++)
-        // {
-        //     target_joint_positions[i*3+0] = 0;
-        //     target_joint_positions[i*3+1] = (final_joint_value[i*3+1] - 0.959931) * std::sin((M_PI/4500000)*sin_time_) + 0.959931;
-        //     target_joint_positions[i*3+2] = (final_joint_value[i*3+2] - (-2.05447585040414)) * std::sin((M_PI/4500000)*sin_time_) + (-2.05447585040414);
-        // }
-
-        publishFootContacts_(foot_contacts);
-        publishJoints_(target_joint_positions);
-    }
-
     actual_time_ = rosTimeToChampTime(clock_.now());
     if((actual_time_-starting_time_) >= finishing_time_ && actual_joint_states_.position.size() == 12)
     {
         stand_up_ = false;
+    }
+
+    if(stand_up_ == false)
+    {
+        // Uncomment for squat simulation
+        sin_time_ = rosTimeToChampTime(clock_.now()) -starting_time_ - finishing_time_;
+        // std::cout << "sin_time_: " << sin_time_ << std::endl;
+        for(int i = 0; i<4; i++)
+        {
+            target_joint_positions[i*3+0] = 0;
+            target_joint_positions[i*3+1] = (final_joint_value[i*3+1] - 0.959931) * std::cos((M_PI/4500000)*sin_time_) + 0.959931;
+            target_joint_positions[i*3+2] = (final_joint_value[i*3+2] - (-2.05447585040414)) * std::cos((M_PI/4500000)*sin_time_) + (-2.05447585040414);
+        }
+
+        publishFootContacts_(foot_contacts);
+        publishJoints_(target_joint_positions);
     }
 
 }
