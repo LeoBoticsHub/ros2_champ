@@ -49,6 +49,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <trajectory_msgs/msg/joint_trajectory.hpp>
 #include <trajectory_msgs/msg/joint_trajectory_point.hpp>
+#include <cmath>
 
 class QuadrupedController: public rclcpp::Node
 {
@@ -84,8 +85,11 @@ class QuadrupedController: public rclcpp::Node
     bool stand_up_ = true;
     bool starting_values_ = true;
 
-    float starting_joint_value[12] = {};   
+    float starting_joint_value[12] = {};
+    float final_joint_value[12] = {};   
+     
     long int actual_time_;
+    long int sin_time_;
     long int starting_time_;
     long int finishing_time_ = 2500000; // in microseconds (10^-6)
 

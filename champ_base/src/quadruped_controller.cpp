@@ -147,7 +147,14 @@ void QuadrupedController::controlLoop_()
                 target_joint_positions[i*3+0] = starting_joint_value[i*3+0] + ((target_joint_positions[i*3+0] - starting_joint_value[i*3+0])/finishing_time_)*(actual_time_-starting_time_);
                 target_joint_positions[i*3+1] = starting_joint_value[i*3+1] + ((target_joint_positions[i*3+1] - starting_joint_value[i*3+1])/finishing_time_)*(actual_time_-starting_time_);
                 target_joint_positions[i*3+2] = starting_joint_value[i*3+2] + ((target_joint_positions[i*3+2] - starting_joint_value[i*3+2])/finishing_time_)*(actual_time_-starting_time_);
-                // std::cout << target_joint_positions[1] << std::endl;
+
+                // std::cout << "joint[" << i << "]" << target_joint_positions[i] << std::endl;
+                // std::cout << "joint[" << i + 1 << "]" << target_joint_positions[i + 1] << std::endl;
+                // std::cout << "joint[" << i + 2 << "]" << target_joint_positions[i + 2] << std::endl;
+
+                final_joint_value[i*3+0] = starting_joint_value[i*3+0] + ((target_joint_positions[i*3+0] - starting_joint_value[i*3+0])/finishing_time_)*(actual_time_-starting_time_);
+                final_joint_value[i*3+1] = starting_joint_value[i*3+1] + ((target_joint_positions[i*3+1] - starting_joint_value[i*3+1])/finishing_time_)*(actual_time_-starting_time_);
+                final_joint_value[i*3+2] = starting_joint_value[i*3+2] + ((target_joint_positions[i*3+2] - starting_joint_value[i*3+2])/finishing_time_)*(actual_time_-starting_time_);
             }
             publishFootContacts_(foot_contacts);
             publishJoints_(target_joint_positions);  
@@ -167,7 +174,17 @@ void QuadrupedController::controlLoop_()
     // RCLCPP_INFO(this->get_logger(), "----------------------------------------");
 
     if(stand_up_ == false)
-    {    
+    {
+        // Uncomment for squat simulation
+        // sin_time_ = rosTimeToChampTime(clock_.now()) - finishing_time_;
+
+        // for(int i = 0; i<4; i++)
+        // {
+        //     target_joint_positions[i*3+0] = 0;
+        //     target_joint_positions[i*3+1] = (final_joint_value[i*3+1] - 0.959931) * std::sin((M_PI/4500000)*sin_time_) + 0.959931;
+        //     target_joint_positions[i*3+2] = (final_joint_value[i*3+2] - (-2.05447585040414)) * std::sin((M_PI/4500000)*sin_time_) + (-2.05447585040414);
+        // }
+
         publishFootContacts_(foot_contacts);
         publishJoints_(target_joint_positions);
     }
